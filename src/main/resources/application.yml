@@ -11,3 +11,11 @@ spring:
 server:
   context-path: /sell
 
+wechat:
+  mpAppId: wx03ee9e2f8bc12b2e
+  mpAppSecret: 1ea78c825158a3738770650fafbfd5bd
+  mchId: 11
+  mchKey: c1
+  keyPath: /var
+  notifyUrl: http://lxstsell.natapp1.cc/sell/pay/notify
+

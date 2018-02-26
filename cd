@@ -1,0 +1,1096 @@
+[1mdiff --git a/pom.xml b/pom.xml[m
+[1mindex 76d3cd0..f63dc49 100644[m
+[1m--- a/pom.xml[m
+[1m+++ b/pom.xml[m
+[36m@@ -51,6 +51,25 @@[m
+ 			<groupId>com.google.code.gson</groupId>[m
+ 			<artifactId>gson</artifactId>[m
+ 		</dependency>[m
+[32m+[m		[32m<dependency>[m
+[32m+[m			[32m<groupId>com.github.binarywang</groupId>[m
+[32m+[m			[32m<artifactId>weixin-java-mp</artifactId>[m
+[32m+[m			[32m<version>2.7.0</version>[m
+[32m+[m		[32m</dependency>[m
+[32m+[m		[32m<dependency>[m
+[32m+[m			[32m<groupId>org.springframework.boot</groupId>[m
+[32m+[m			[32m<artifactId>spring-boot-configuration-processor</artifactId>[m
+[32m+[m			[32m<optional>true</optional>[m
+[32m+[m		[32m</dependency>[m
+[32m+[m		[32m<dependency>[m
+[32m+[m			[32m<groupId>cn.springboot</groupId>[m
+[32m+[m			[32m<artifactId>best-pay-sdk</artifactId>[m
+[32m+[m			[32m<version>1.1.0</version>[m
+[32m+[m		[32m</dependency>[m
+[32m+[m		[32m<dependency>[m
+[32m+[m			[32m<groupId>org.springframework.boot</groupId>[m
+[32m+[m			[32m<artifactId>spring-boot-starter-freemarker</artifactId>[m
+[32m+[m		[32m</dependency>[m
+ 	</dependencies>[m
+ [m
+ 	<build>[m
+[1mdiff --git a/src/main/java/com/imooc/sell/config/WechatAccountConfig.java b/src/main/java/com/imooc/sell/config/WechatAccountConfig.java[m
+[1mindex 0ee9a5d..73089b5 100644[m
+[1m--- a/src/main/java/com/imooc/sell/config/WechatAccountConfig.java[m
+[1m+++ b/src/main/java/com/imooc/sell/config/WechatAccountConfig.java[m
+[36m@@ -1,4 +1,24 @@[m
+ package com.imooc.sell.config;[m
+ [m
+[32m+[m[32mimport lombok.Data;[m
+[32m+[m[32mimport org.springframework.boot.context.properties.ConfigurationProperties;[m
+[32m+[m[32mimport org.springframework.stereotype.Component;[m
+[32m+[m
+[32m+[m[32m@Data[m
+[32m+[m[32m@Component[m
+[32m+[m[32m@ConfigurationProperties(prefix = "wechat")[m
+ public class WechatAccountConfig {[m
+[32m+[m
+[32m+[m[32m    private String mpAppId;[m
+[32m+[m
+[32m+[m[32m    private String mpAppSecret;[m
+[32m+[m
+[32m+[m[32m    //商户号[m
+[32m+[m[32m    private String mchId;[m
+[32m+[m[32m    //商户密钥[m
+[32m+[m[32m    private String mchKey;[m
+[32m+[m[32m    //商户证书路径[m
+[32m+[m[32m    private String keyPath;[m
+[32m+[m[32m    //微信支付异步通知地址[m
+[32m+[m[32m    private String notifyUrl;[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/config/WechatMpConfig.java b/src/main/java/com/imooc/sell/config/WechatMpConfig.java[m
+[1mindex 09d4276..a64cdc4 100644[m
+[1m--- a/src/main/java/com/imooc/sell/config/WechatMpConfig.java[m
+[1m+++ b/src/main/java/com/imooc/sell/config/WechatMpConfig.java[m
+[36m@@ -1,4 +1,31 @@[m
+ package com.imooc.sell.config;[m
+ [m
+[32m+[m[32mimport me.chanjar.weixin.mp.api.WxMpConfigStorage;[m
+[32m+[m[32mimport me.chanjar.weixin.mp.api.WxMpInMemoryConfigStorage;[m
+[32m+[m[32mimport me.chanjar.weixin.mp.api.WxMpService;[m
+[32m+[m[32mimport me.chanjar.weixin.mp.api.impl.WxMpServiceImpl;[m
+[32m+[m[32mimport org.springframework.beans.factory.annotation.Autowired;[m
+[32m+[m[32mimport org.springframework.context.annotation.Bean;[m
+[32m+[m[32mimport org.springframework.stereotype.Component;[m
+[32m+[m
+[32m+[m[32m@Component[m
+ public class WechatMpConfig {[m
+[32m+[m
+[32m+[m[32m    @Autowired[m
+[32m+[m[32m    private WechatAccountConfig accountConfig;[m
+[32m+[m
+[32m+[m[32m    @Bean[m
+[32m+[m[32m    public WxMpService wxMpService(){[m
+[32m+[m[32m        WxMpService wxMpService = new WxMpServiceImpl();[m
+[32m+[m[32m        wxMpService.setWxMpConfigStorage(wxMpConfigStorage());[m
+[32m+[m[32m        return  wxMpService;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    public WxMpConfigStorage wxMpConfigStorage(){[m
+[32m+[m[32m        WxMpInMemoryConfigStorage wxMpConfigStorage = new WxMpInMemoryConfigStorage();[m
+[32m+[m[32m        wxMpConfigStorage.setAppId(accountConfig.getMpAppId());[m
+[32m+[m[32m        wxMpConfigStorage.setSecret(accountConfig.getMpAppSecret());[m
+[32m+[m[32m        return wxMpConfigStorage;[m
+[32m+[m[32m    }[m
+[32m+[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/config/WechatPayConfig.java b/src/main/java/com/imooc/sell/config/WechatPayConfig.java[m
+[1mindex 592c612..c975aaf 100644[m
+[1m--- a/src/main/java/com/imooc/sell/config/WechatPayConfig.java[m
+[1m+++ b/src/main/java/com/imooc/sell/config/WechatPayConfig.java[m
+[36m@@ -1,4 +1,36 @@[m
+ package com.imooc.sell.config;[m
+ [m
+[32m+[m[32mimport com.lly835.bestpay.config.WxPayH5Config;[m
+[32m+[m[32mimport com.lly835.bestpay.service.impl.BestPayServiceImpl;[m
+[32m+[m[32mimport org.springframework.beans.factory.annotation.Autowired;[m
+[32m+[m[32mimport org.springframework.context.annotation.Bean;[m
+[32m+[m[32mimport org.springframework.stereotype.Component;[m
+[32m+[m
+[32m+[m[32m@Component[m
+ public class WechatPayConfig {[m
+[32m+[m
+[32m+[m[32m    @Autowired[m
+[32m+[m[32m    private WechatAccountConfig accountConfig;[m
+[32m+[m
+[32m+[m[32m    @Bean[m
+[32m+[m[32m    public BestPayServiceImpl bestPayService(){[m
+[32m+[m
+[32m+[m
+[32m+[m[32m        BestPayServiceImpl bestPayService = new BestPayServiceImpl();[m
+[32m+[m[32m        bestPayService.setWxPayH5Config(wxPayH5Config());[m
+[32m+[m[32m        return bestPayService;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Bean[m
+[32m+[m[32m    public WxPayH5Config wxPayH5Config(){[m
+[32m+[m[32m        WxPayH5Config wxPayH5Config = new WxPayH5Config();[m
+[32m+[m[32m        wxPayH5Config.setAppId(accountConfig.getMpAppId());[m
+[32m+[m[32m        wxPayH5Config.setAppSecret(accountConfig.getMpAppSecret());[m
+[32m+[m[32m        wxPayH5Config.setMchId(accountConfig.getMchId());[m
+[32m+[m[32m        wxPayH5Config.setMchKey(accountConfig.getMchKey());[m
+[32m+[m[32m        wxPayH5Config.setKeyPath(accountConfig.getKeyPath());[m
+[32m+[m[32m        wxPayH5Config.setNotifyUrl(accountConfig.getNotifyUrl());[m
+[32m+[m[32m        return wxPayH5Config;[m
+[32m+[m[32m    }[m
+[32m+[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/controller/PayController.java b/src/main/java/com/imooc/sell/controller/PayController.java[m
+[1mindex 36a17cf..fa87098 100644[m
+[1m--- a/src/main/java/com/imooc/sell/controller/PayController.java[m
+[1m+++ b/src/main/java/com/imooc/sell/controller/PayController.java[m
+[36m@@ -1,4 +1,52 @@[m
+ package com.imooc.sell.controller;[m
+ [m
+[32m+[m[32mimport com.imooc.sell.dto.OrderDTO;[m
+[32m+[m[32mimport com.imooc.sell.enums.ResultEnum;[m
+[32m+[m[32mimport com.imooc.sell.exception.SellExctption;[m
+[32m+[m[32mimport com.imooc.sell.service.OrderService;[m
+[32m+[m[32mimport com.imooc.sell.service.PayService;[m
+[32m+[m[32mimport com.lly835.bestpay.model.PayResponse;[m
+[32m+[m[32mimport org.springframework.beans.factory.annotation.Autowired;[m
+[32m+[m[32mimport org.springframework.stereotype.Controller;[m
+[32m+[m[32mimport org.springframework.web.bind.annotation.*;[m
+[32m+[m[32mimport org.springframework.web.servlet.ModelAndView;[m
+[32m+[m
+[32m+[m[32mimport java.util.Map;[m
+[32m+[m
+[32m+[m[32m@Controller[m
+[32m+[m[32m@RequestMapping("/pay")[m
+ public class PayController {[m
+[32m+[m
+[32m+[m[32m    @Autowired[m
+[32m+[m[32m    private OrderService orderService;[m
+[32m+[m
+[32m+[m[32m    @Autowired[m
+[32m+[m[32m    private PayService payService;[m
+[32m+[m
+[32m+[m[32m    @GetMapping("/create")[m
+[32m+[m[32m    public ModelAndView create(@RequestParam("orderId") String orderId,[m
+[32m+[m[32m                               @RequestParam("returnUrl") String returnUrl,[m
+[32m+[m[32m                               Map<String,Object> map){[m
+[32m+[m[32m        //1,查询订单[m
+[32m+[m[32m        OrderDTO orderDTO = orderService.findOne(orderId);[m
+[32m+[m[32m        if (orderDTO == null) {[m
+[32m+[m[32m            throw new SellExctption(ResultEnum.ORDER_NOT_EXIST);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        //2,发起支付[m
+[32m+[m[32m        PayResponse payResponse = payService.create(orderDTO);[m
+[32m+[m[32m        map.put("payResponse",payResponse);[m
+[32m+[m[32m        map.put("returnUrl",returnUrl);[m
+[32m+[m[32m        return new ModelAndView("pay/create",map);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    //微信异步通知[m
+[32m+[m[32m    @PostMapping("/notify")[m
+[32m+[m[32m    public ModelAndView notify(@RequestBody String notifyData){[m
+[32m+[m[32m        payService.notify(notifyData);[m
+[32m+[m
+[32m+[m[32m        //返回给微信处理结果[m
+[32m+[m[32m        return new ModelAndView("pay/success");[m
+[32m+[m[32m    }[m
+[32m+[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/controller/SellerOrderController.java b/src/main/java/com/imooc/sell/controller/SellerOrderController.java[m
+[1mindex adf9ef1..654f359 100644[m
+[1m--- a/src/main/java/com/imooc/sell/controller/SellerOrderController.java[m
+[1m+++ b/src/main/java/com/imooc/sell/controller/SellerOrderController.java[m
+[36m@@ -1,4 +1,96 @@[m
+ package com.imooc.sell.controller;[m
+ [m
+[32m+[m[32mimport com.imooc.sell.dto.OrderDTO;[m
+[32m+[m[32mimport com.imooc.sell.enums.ResultEnum;[m
+[32m+[m[32mimport com.imooc.sell.exception.SellExctption;[m
+[32m+[m[32mimport com.imooc.sell.service.OrderService;[m
+[32m+[m[32mimport lombok.extern.slf4j.Slf4j;[m
+[32m+[m[32mimport org.springframework.beans.factory.annotation.Autowired;[m
+[32m+[m[32mimport org.springframework.data.domain.Page;[m
+[32m+[m[32mimport org.springframework.data.domain.PageRequest;[m
+[32m+[m[32mimport org.springframework.stereotype.Controller;[m
+[32m+[m[32mimport org.springframework.web.bind.annotation.GetMapping;[m
+[32m+[m[32mimport org.springframework.web.bind.annotation.RequestMapping;[m
+[32m+[m[32mimport org.springframework.web.bind.annotation.RequestParam;[m
+[32m+[m[32mimport org.springframework.web.servlet.ModelAndView;[m
+[32m+[m
+[32m+[m[32mimport java.util.Map;[m
+[32m+[m
+[32m+[m[32m//卖家端订单[m
+[32m+[m[32m@Controller[m
+[32m+[m[32m@RequestMapping("/seller/order")[m
+[32m+[m[32m@Slf4j[m
+ public class SellerOrderController {[m
+[32m+[m[32m    @Autowired[m
+[32m+[m[32m    private OrderService orderService;[m
+[32m+[m
+[32m+[m[32m    //订单列表[m
+[32m+[m[32m    @GetMapping("/list")[m
+[32m+[m[32m    public ModelAndView list(@RequestParam(value = "page",defaultValue = "1") Integer page,[m
+[32m+[m[32m                             @RequestParam(value = "size",defaultValue = "10") Integer size,[m
+[32m+[m[32m                             Map<String,Object> map){[m
+[32m+[m[32m        PageRequest request = new PageRequest(page-1,size);[m
+[32m+[m[32m        Page<OrderDTO> orderDTOPage = orderService.findList(request);[m
+[32m+[m[32m        map.put("orderDTOPage",orderDTOPage);[m
+[32m+[m[32m        map.put("currentPage",page);[m
+[32m+[m[32m        map.put("size",size);[m
+[32m+[m[32m        return new ModelAndView("order/list",map);[m
+[32m+[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    //取消订单[m
+[32m+[m[32m    @GetMapping("/cancel")[m
+[32m+[m[32m    public ModelAndView cancel(@RequestParam("orderId") String orderId,[m
+[32m+[m[32m                               Map<String,Object> map){[m
+[32m+[m[32m        try{[m
+[32m+[m[32m            OrderDTO orderDTO = orderService.findOne(orderId);[m
+[32m+[m[32m            orderService.cancel(orderDTO);[m
+[32m+[m[32m        } catch (SellExctption e){[m
+[32m+[m[32m            log.error("【卖家端取消订单】发生异常{}", e);[m
+[32m+[m[32m            map.put("msg", e.getMessage());[m
+[32m+[m[32m            map.put("url", "/sell/seller/order/list");[m
+[32m+[m[32m            return new ModelAndView("common/error",map);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        map.put("msg", ResultEnum.ORDER_CANCEL_SUCCESS.getMessage());[m
+[32m+[m[32m        map.put("url", "/sell/seller/order/list");[m
+[32m+[m[32m        return new ModelAndView("/common/success");[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    //订单详情[m
+[32m+[m[32m    @GetMapping("/detail")[m
+[32m+[m[32m    public ModelAndView detail(@RequestParam("orderId") String orderId,[m
+[32m+[m[32m                               Map<String,Object> map){[m
+[32m+[m[32m        OrderDTO orderDTO = new OrderDTO();[m
+[32m+[m[32m        try{[m
+[32m+[m[32m            orderDTO = orderService.findOne(orderId);[m
+[32m+[m[32m        } catch (SellExctption e){[m
+[32m+[m[32m            log.error("【卖家端查询订单详情】发生异常{}", e);[m
+[32m+[m[32m            map.put("msg", e.getMessage());[m
+[32m+[m[32m            map.put("url", "/sell/seller/order/list");[m
+[32m+[m[32m            return new ModelAndView("common/error",map);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        map.put("orderDTO",orderDTO);[m
+[32m+[m[32m        return new ModelAndView("/order/detail");[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    //完结订单[m
+[32m+[m[32m    @GetMapping("/finish")[m
+[32m+[m[32m    public ModelAndView finished(@RequestParam("orderId") String orderId,[m
+[32m+[m[32m                               Map<String,Object> map){[m
+[32m+[m[32m        try{[m
+[32m+[m[32m            OrderDTO orderDTO = orderService.findOne(orderId);[m
+[32m+[m[32m            orderService.finish(orderDTO);[m
+[32m+[m[32m        } catch (SellExctption e){[m
+[32m+[m[32m            log.error("【卖家端完结订单】发生异常{}", e);[m
+[32m+[m[32m            map.put("msg", e.getMessage());[m
+[32m+[m[32m            map.put("url", "/sell/seller/order/list");[m
+[32m+[m[32m            return new ModelAndView("common/error",map);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        map.put("msg", ResultEnum.ORDER_FINISH_SUCCESS.getMessage());[m
+[32m+[m[32m        map.put("url", "/sell/seller/order/list");[m
+[32m+[m[32m        return new ModelAndView("/common/success");[m
+[32m+[m[32m    }[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/controller/WechatController.java b/src/main/java/com/imooc/sell/controller/WechatController.java[m
+[1mindex aecdded..0c84142 100644[m
+[1m--- a/src/main/java/com/imooc/sell/controller/WechatController.java[m
+[1m+++ b/src/main/java/com/imooc/sell/controller/WechatController.java[m
+[36m@@ -1,4 +1,52 @@[m
+ package com.imooc.sell.controller;[m
+ [m
+[32m+[m[32mimport com.imooc.sell.enums.ResultEnum;[m
+[32m+[m[32mimport com.imooc.sell.exception.SellExctption;[m
+[32m+[m[32mimport lombok.extern.slf4j.Slf4j;[m
+[32m+[m[32mimport me.chanjar.weixin.common.api.WxConsts;[m
+[32m+[m[32mimport me.chanjar.weixin.common.exception.WxErrorException;[m
+[32m+[m[32mimport me.chanjar.weixin.mp.api.WxMpService;[m
+[32m+[m[32mimport me.chanjar.weixin.mp.bean.result.WxMpOAuth2AccessToken;[m
+[32m+[m[32mimport org.springframework.beans.factory.annotation.Autowired;[m
+[32m+[m[32mimport org.springframework.stereotype.Controller;[m
+[32m+[m[32mimport org.springframework.web.bind.annotation.GetMapping;[m
+[32m+[m[32mimport org.springframework.web.bind.annotation.RequestMapping;[m
+[32m+[m[32mimport org.springframework.web.bind.annotation.RequestParam;[m
+[32m+[m
+[32m+[m[32mimport java.net.URLEncoder;[m
+[32m+[m
+[32m+[m[32m@Controller[m
+[32m+[m[32m@RequestMapping("/wechat")[m
+[32m+[m[32m@Slf4j[m
+ public class WechatController {[m
+[32m+[m
+[32m+[m[32m    @Autowired[m
+[32m+[m[32m    private WxMpService wxMpService;[m
+[32m+[m
+[32m+[m[32m    @GetMapping("/authorize")[m
+[32m+[m[32m    public String authorize(@RequestParam("returnUrl") String returnUrl){[m
+[32m+[m[32m        //1. 配置[m
+[32m+[m[32m        //2. 调用方法[m
+[32m+[m[32m        String url = "http://lxstsell.natapp1.cc/sell/wechat/userInfo";[m
+[32m+[m[32m        String redirectUrl = wxMpService.oauth2buildAuthorizationUrl(url,WxConsts.OAUTH2_SCOPE_USER_INFO, URLEncoder.encode(returnUrl));[m
+[32m+[m[32m        return "redirect:" + redirectUrl;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @GetMapping("/userInfo")[m
+[32m+[m[32m    public String userInfo(@RequestParam("code") String code,[m
+[32m+[m[32m                         @RequestParam("state") String returnUrl){[m
+[32m+[m[32m        WxMpOAuth2AccessToken wxMpOAuth2AccessToken = new WxMpOAuth2AccessToken();[m
+[32m+[m[32m        try {[m
+[32m+[m[32m            wxMpOAuth2AccessToken = wxMpService.oauth2getAccessToken(code);[m
+[32m+[m[32m        }catch (WxErrorException e){[m
+[32m+[m[32m            log.error("【微信网页授权】{}",e);[m
+[32m+[m[32m            throw new SellExctption(ResultEnum.WECHAT_MP_ERROR.getCode(),e.getError().getErrorMsg());[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        String openId = wxMpOAuth2AccessToken.getOpenId();[m
+[32m+[m
+[32m+[m[32m        return "redirect:" + returnUrl + "?openid=" + openId;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/controller/WeixinController.java b/src/main/java/com/imooc/sell/controller/WeixinController.java[m
+[1mindex 7026461..90cc7c0 100644[m
+[1m--- a/src/main/java/com/imooc/sell/controller/WeixinController.java[m
+[1m+++ b/src/main/java/com/imooc/sell/controller/WeixinController.java[m
+[36m@@ -1,4 +1,25 @@[m
+ package com.imooc.sell.controller;[m
+ [m
+[32m+[m[32mimport lombok.extern.slf4j.Slf4j;[m
+[32m+[m[32mimport org.springframework.web.bind.annotation.GetMapping;[m
+[32m+[m[32mimport org.springframework.web.bind.annotation.RequestMapping;[m
+[32m+[m[32mimport org.springframework.web.bind.annotation.RequestParam;[m
+[32m+[m[32mimport org.springframework.web.bind.annotation.RestController;[m
+[32m+[m[32mimport org.springframework.web.client.RestTemplate;[m
+[32m+[m
+[32m+[m[32m@RestController[m
+[32m+[m[32m@RequestMapping("/weixin")[m
+[32m+[m[32m@Slf4j[m
+ public class WeixinController {[m
+[32m+[m
+[32m+[m[32m    @GetMapping("/auth")[m
+[32m+[m[32m    public void auth(@RequestParam("code") String code){[m
+[32m+[m[32m        log.info("进入auth方法...");[m
+[32m+[m[32m        log.info("code={}",code);[m
+[32m+[m
+[32m+[m[32m        String url = "";[m
+[32m+[m[32m        RestTemplate restTemplate = new RestTemplate();[m
+[32m+[m[32m        String response = restTemplate.getForObject(url,String.class);[m
+[32m+[m[32m        log.info("response={}",response);[m
+[32m+[m[32m    }[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/dto/OrderDTO.java b/src/main/java/com/imooc/sell/dto/OrderDTO.java[m
+[1mindex 6c66ec7..f09fcb9 100644[m
+[1m--- a/src/main/java/com/imooc/sell/dto/OrderDTO.java[m
+[1m+++ b/src/main/java/com/imooc/sell/dto/OrderDTO.java[m
+[36m@@ -1,8 +1,12 @@[m
+ package com.imooc.sell.dto;[m
+ [m
+[32m+[m[32mimport com.fasterxml.jackson.annotation.JsonIgnore;[m
+ import com.fasterxml.jackson.annotation.JsonInclude;[m
+ import com.fasterxml.jackson.databind.annotation.JsonSerialize;[m
+ import com.imooc.sell.dataobject.OrderDetail;[m
+[32m+[m[32mimport com.imooc.sell.enums.OrderStatusEnum;[m
+[32m+[m[32mimport com.imooc.sell.enums.PayStatusEnum;[m
+[32m+[m[32mimport com.imooc.sell.utils.EnumUtil;[m
+ import com.imooc.sell.utils.serializer.Date2LongSerializer;[m
+ import lombok.Data;[m
+ [m
+[36m@@ -47,4 +51,13 @@[m [mpublic class OrderDTO {[m
+     private Date updateTime;[m
+ [m
+     List<OrderDetail> orderDetailList;[m
+[32m+[m
+[32m+[m[32m    @JsonIgnore[m
+[32m+[m[32m    public OrderStatusEnum getOrderStatusEnum(){[m
+[32m+[m[32m        return EnumUtil.getByCode(orderStatus,OrderStatusEnum.class);[m
+[32m+[m[32m    }[m
+[32m+[m[32m    @JsonIgnore[m
+[32m+[m[32m    public PayStatusEnum getPayStatusEnum(){[m
+[32m+[m[32m        return EnumUtil.getByCode(payStatus,PayStatusEnum.class);[m
+[32m+[m[32m    }[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/enums/CodeEnum.java b/src/main/java/com/imooc/sell/enums/CodeEnum.java[m
+[1mindex 2fb5f9a..244e1a2 100644[m
+[1m--- a/src/main/java/com/imooc/sell/enums/CodeEnum.java[m
+[1m+++ b/src/main/java/com/imooc/sell/enums/CodeEnum.java[m
+[36m@@ -1,4 +1,5 @@[m
+ package com.imooc.sell.enums;[m
+ [m
+ public interface CodeEnum {[m
+[32m+[m[32m    Integer getCode();[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/enums/OrderStatusEnum.java b/src/main/java/com/imooc/sell/enums/OrderStatusEnum.java[m
+[1mindex 2e7af0a..9f2dfb3 100644[m
+[1m--- a/src/main/java/com/imooc/sell/enums/OrderStatusEnum.java[m
+[1m+++ b/src/main/java/com/imooc/sell/enums/OrderStatusEnum.java[m
+[36m@@ -3,7 +3,7 @@[m [mpackage com.imooc.sell.enums;[m
+ import lombok.Getter;[m
+ [m
+ @Getter[m
+[31m-public enum OrderStatusEnum {[m
+[32m+[m[32mpublic enum OrderStatusEnum implements CodeEnum {[m
+     NEW(0,"新订单"),[m
+     FINISHED(1,"完结"),[m
+     CANCEL(2,"已取消")[m
+[1mdiff --git a/src/main/java/com/imooc/sell/enums/PayStatusEnum.java b/src/main/java/com/imooc/sell/enums/PayStatusEnum.java[m
+[1mindex e9f3777..836b113 100644[m
+[1m--- a/src/main/java/com/imooc/sell/enums/PayStatusEnum.java[m
+[1m+++ b/src/main/java/com/imooc/sell/enums/PayStatusEnum.java[m
+[36m@@ -3,7 +3,7 @@[m [mpackage com.imooc.sell.enums;[m
+ import lombok.Getter;[m
+ [m
+ @Getter[m
+[31m-public enum PayStatusEnum {[m
+[32m+[m[32mpublic enum PayStatusEnum implements CodeEnum {[m
+     WAIT(0,"等待支付"),[m
+     SUCCESS(1,"支付成功"),[m
+ [m
+[1mdiff --git a/src/main/java/com/imooc/sell/enums/ResultEnum.java b/src/main/java/com/imooc/sell/enums/ResultEnum.java[m
+[1mindex bdf501c..7361731 100644[m
+[1m--- a/src/main/java/com/imooc/sell/enums/ResultEnum.java[m
+[1m+++ b/src/main/java/com/imooc/sell/enums/ResultEnum.java[m
+[36m@@ -5,6 +5,8 @@[m [mimport lombok.Getter;[m
+ @Getter[m
+ public enum ResultEnum {[m
+ [m
+[32m+[m[32m    SUCCESS(0,"成功"),[m
+[32m+[m
+     PARAM_ERROR(1,"参数不正确"),[m
+ [m
+     PRODUCT_NOT_EXIST(10,"商品不存在"),[m
+[36m@@ -26,6 +28,14 @@[m [mpublic enum ResultEnum {[m
+     CART_EMPTY(18,"购物车为空"),[m
+ [m
+     ORDER_OWNER_ERROR(19,"该订单不属于当前用户"),[m
+[32m+[m
+[32m+[m[32m    WECHAT_MP_ERROR(20,"微信公众账号方面错误"),[m
+[32m+[m
+[32m+[m[32m    WXPAY_NOTIFY_MONEY_VERIFY_ERROR(21,"微信支付异步通知金额校验不通过"),[m
+[32m+[m
+[32m+[m[32m    ORDER_CANCEL_SUCCESS(22,"订单取消成功"),[m
+[32m+[m
+[32m+[m[32m    ORDER_FINISH_SUCCESS(23,"订单完结成功")[m
+     ;[m
+ [m
+     private Integer code;[m
+[1mdiff --git a/src/main/java/com/imooc/sell/service/OrderService.java b/src/main/java/com/imooc/sell/service/OrderService.java[m
+[1mindex 687542f..48ba20f 100644[m
+[1m--- a/src/main/java/com/imooc/sell/service/OrderService.java[m
+[1m+++ b/src/main/java/com/imooc/sell/service/OrderService.java[m
+[36m@@ -24,4 +24,6 @@[m [mpublic interface OrderService {[m
+ //    支付订单[m
+     OrderDTO Paid(OrderDTO orderDTO);[m
+ [m
+[32m+[m[32m    //    查询所有订单列表[m
+[32m+[m[32m    Page<OrderDTO> findList(Pageable pageable);[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/service/PayService.java b/src/main/java/com/imooc/sell/service/PayService.java[m
+[1mindex 99159c4..5b02ce3 100644[m
+[1m--- a/src/main/java/com/imooc/sell/service/PayService.java[m
+[1m+++ b/src/main/java/com/imooc/sell/service/PayService.java[m
+[36m@@ -1,4 +1,11 @@[m
+ package com.imooc.sell.service;[m
+ [m
+[32m+[m[32mimport com.imooc.sell.dto.OrderDTO;[m
+[32m+[m[32mimport com.lly835.bestpay.model.PayResponse;[m
+[32m+[m[32mimport com.lly835.bestpay.model.RefundResponse;[m
+[32m+[m
+ public interface PayService {[m
+[32m+[m[32m    PayResponse create(OrderDTO orderDTO);[m
+[32m+[m[32m    PayResponse notify(String notifyData);[m
+[32m+[m[32m    RefundResponse refund(OrderDTO orderDTO);[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/service/impl/OrderServiceImpl.java b/src/main/java/com/imooc/sell/service/impl/OrderServiceImpl.java[m
+[1mindex 3d0df28..0bf416e 100644[m
+[1m--- a/src/main/java/com/imooc/sell/service/impl/OrderServiceImpl.java[m
+[1m+++ b/src/main/java/com/imooc/sell/service/impl/OrderServiceImpl.java[m
+[36m@@ -13,6 +13,7 @@[m [mimport com.imooc.sell.exception.SellExctption;[m
+ import com.imooc.sell.repository.OrderDetailRepository;[m
+ import com.imooc.sell.repository.OrderMasterRepository;[m
+ import com.imooc.sell.service.OrderService;[m
+[32m+[m[32mimport com.imooc.sell.service.PayService;[m
+ import com.imooc.sell.service.ProductService;[m
+ import com.imooc.sell.utils.KeyUtil;[m
+ import lombok.extern.slf4j.Slf4j;[m
+[36m@@ -44,6 +45,9 @@[m [mpublic class OrderServiceImpl implements OrderService {[m
+     @Autowired[m
+     private OrderMasterRepository orderMasterRepository;[m
+ [m
+[32m+[m[32m    @Autowired[m
+[32m+[m[32m    private PayService payService;[m
+[32m+[m
+     @Override[m
+     @Transactional[m
+     public OrderDTO create(OrderDTO orderDTO) {[m
+[36m@@ -148,7 +152,7 @@[m [mpublic class OrderServiceImpl implements OrderService {[m
+ [m
+         //如果已支付,需要退款[m
+         if (orderDTO.getPayStatus().equals(PayStatusEnum.SUCCESS.getCode())){[m
+[31m-            //TODO[m
+[32m+[m[32m            payService.refund(orderDTO);[m
+         }[m
+         return orderDTO;[m
+     }[m
+[36m@@ -202,4 +206,13 @@[m [mpublic class OrderServiceImpl implements OrderService {[m
+ [m
+         return  orderDTO;[m
+     }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public Page<OrderDTO> findList(Pageable pageable){[m
+[32m+[m[32m        Page<OrderMaster> orderMasterPage = orderMasterRepository.findAll(pageable);[m
+[32m+[m[32m        List<OrderDTO> orderDTOList = OrderMaster20rderDTOConverter.convert(orderMasterPage.getContent());[m
+[32m+[m
+[32m+[m[32m        return new PageImpl<OrderDTO>(orderDTOList, pageable, orderMasterPage.getTotalElements());[m
+[32m+[m
+[32m+[m[32m    }[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/service/impl/PayServiceImpl.java b/src/main/java/com/imooc/sell/service/impl/PayServiceImpl.java[m
+[1mindex b4b7270..e26ae4a 100644[m
+[1m--- a/src/main/java/com/imooc/sell/service/impl/PayServiceImpl.java[m
+[1m+++ b/src/main/java/com/imooc/sell/service/impl/PayServiceImpl.java[m
+[36m@@ -1,4 +1,94 @@[m
+ package com.imooc.sell.service.impl;[m
+ [m
+[31m-public class PayServiceImpl {[m
+[32m+[m[32mimport com.imooc.sell.dto.OrderDTO;[m
+[32m+[m[32mimport com.imooc.sell.enums.ResultEnum;[m
+[32m+[m[32mimport com.imooc.sell.exception.SellExctption;[m
+[32m+[m[32mimport com.imooc.sell.service.OrderService;[m
+[32m+[m[32mimport com.imooc.sell.service.PayService;[m
+[32m+[m[32mimport com.imooc.sell.utils.JsonUtil;[m
+[32m+[m[32mimport com.imooc.sell.utils.MathUtil;[m
+[32m+[m[32mimport com.lly835.bestpay.enums.BestPayTypeEnum;[m
+[32m+[m[32mimport com.lly835.bestpay.model.PayRequest;[m
+[32m+[m[32mimport com.lly835.bestpay.model.PayResponse;[m
+[32m+[m[32mimport com.lly835.bestpay.model.RefundRequest;[m
+[32m+[m[32mimport com.lly835.bestpay.model.RefundResponse;[m
+[32m+[m[32mimport com.lly835.bestpay.service.impl.BestPayServiceImpl;[m
+[32m+[m[32mimport lombok.extern.slf4j.Slf4j;[m
+[32m+[m[32mimport org.springframework.beans.factory.annotation.Autowired;[m
+[32m+[m[32mimport org.springframework.stereotype.Service;[m
+[32m+[m
+[32m+[m
+[32m+[m[32m@Service[m
+[32m+[m[32m@Slf4j[m
+[32m+[m[32mpublic class PayServiceImpl implements PayService {[m
+[32m+[m
+[32m+[m[32m    private static final String ORDER_NAME = "微信点餐订单";[m
+[32m+[m
+[32m+[m[32m    @Autowired[m
+[32m+[m[32m    private BestPayServiceImpl bestPayService;[m
+[32m+[m
+[32m+[m[32m    @Autowired[m
+[32m+[m[32m    private OrderService orderService;[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public PayResponse create(OrderDTO orderDTO) {[m
+[32m+[m[32m        PayRequest payRequest = new PayRequest();[m
+[32m+[m[32m        payRequest.setOpenid(orderDTO.getBuyerOpenid());[m
+[32m+[m[32m        payRequest.setOrderAmount(orderDTO.getOrderAmount().doubleValue());[m
+[32m+[m[32m        payRequest.setOrderId(orderDTO.getOrderId());[m
+[32m+[m[32m        payRequest.setOrderName(ORDER_NAME);[m
+[32m+[m[32m        payRequest.setPayTypeEnum(BestPayTypeEnum.WXPAY_H5);[m
+[32m+[m[32m        log.info("【微信支付】发起支付,request={}", JsonUtil.toJson(payRequest));[m
+[32m+[m[32m        PayResponse payResponse = bestPayService.pay(payRequest);[m
+[32m+[m[32m        log.info("【微信支付】发起支付,response={}",JsonUtil.toJson(payResponse));[m
+[32m+[m[32m        return payResponse;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public PayResponse notify(String notifyData){[m
+[32m+[m[32m        //1。验证签名[m
+[32m+[m[32m        //2。支付的状态[m
+[32m+[m[32m        //3。支付金额[m
+[32m+[m[32m        //4。支付人（下单人 == 支付人）[m
+[32m+[m
+[32m+[m[32m        PayResponse payResponse = bestPayService.asyncNotify(notifyData);[m
+[32m+[m[32m        log.info("【微信支付】异步通知,payResponse={}",JsonUtil.toJson(payResponse));[m
+[32m+[m
+[32m+[m[32m        //查询订单[m
+[32m+[m[32m        OrderDTO orderDTO = orderService.findOne(payResponse.getOrderId());[m
+[32m+[m
+[32m+[m[32m        //判断订单是否存在[m
+[32m+[m[32m        if (orderDTO == null){[m
+[32m+[m[32m            log.error("【微信支付】异步通知,订单不存，orderId={}",payResponse.getOrderId());[m
+[32m+[m[32m            throw new SellExctption(ResultEnum.ORDER_NOT_EXIST);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        //判断金额是否一致[m
+[32m+[m[32m        if (!MathUtil.equals(payResponse.getOrderAmount(),orderDTO.getOrderAmount().doubleValue())){[m
+[32m+[m[32m            log.error("【微信支付】异步通知,订单金额不一致，orderId={}，微信通知金额={},系统金额={}",[m
+[32m+[m[32m                    payResponse.getOrderId(),[m
+[32m+[m[32m                    payResponse.getOrderAmount(),[m
+[32m+[m[32m                    orderDTO.getOrderAmount());[m
+[32m+[m[32m            throw new SellExctption(ResultEnum.WXPAY_NOTIFY_MONEY_VERIFY_ERROR);[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        //修改订单的支付状态[m
+[32m+[m[32m        orderService.Paid(orderDTO);[m
+[32m+[m
+[32m+[m[32m        return payResponse;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    public RefundResponse refund(OrderDTO orderDTO) {[m
+[32m+[m[32m        RefundRequest refundRequest = new RefundRequest();[m
+[32m+[m[32m        refundRequest.setOrderId(orderDTO.getOrderId());[m
+[32m+[m[32m        refundRequest.setOrderAmount(orderDTO.getOrderAmount().doubleValue());[m
+[32m+[m[32m        refundRequest.setPayTypeEnum(BestPayTypeEnum.WXPAY_H5);[m
+[32m+[m[32m        log.info("【微信退款】request={}",JsonUtil.toJson(refundRequest));[m
+[32m+[m
+[32m+[m[32m        RefundResponse refundResponse = new RefundResponse();[m
+[32m+[m[32m        log.info("【微信退款】refundResponse={}",JsonUtil.toJson(refundResponse));[m
+[32m+[m
+[32m+[m[32m        return  refundResponse;[m
+[32m+[m[32m    }[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/utils/EnumUtil.java b/src/main/java/com/imooc/sell/utils/EnumUtil.java[m
+[1mindex d9eae93..ff9a187 100644[m
+[1m--- a/src/main/java/com/imooc/sell/utils/EnumUtil.java[m
+[1m+++ b/src/main/java/com/imooc/sell/utils/EnumUtil.java[m
+[36m@@ -1,4 +1,14 @@[m
+ package com.imooc.sell.utils;[m
+ [m
+[32m+[m[32mimport com.imooc.sell.enums.CodeEnum;[m
+[32m+[m
+ public class EnumUtil {[m
+[32m+[m[32m    public static <T extends CodeEnum>T getByCode(Integer code,Class<T> enumClass){[m
+[32m+[m[32m        for(T each: enumClass.getEnumConstants()){[m
+[32m+[m[32m            if (code.equals(each.getCode())){[m
+[32m+[m[32m                return each;[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m        return null;[m
+[32m+[m[32m    }[m
+ }[m
+[1mdiff --git a/src/main/java/com/imooc/sell/utils/JsonUtil.java b/src/main/java/com/imooc/sell/utils/JsonUtil.java[m
+[1mindex 0aefc9d..ccb782d 100644[m
+[1m--- a/src/main/java/com/imooc/sell/utils/JsonUtil.java[m
+[1m+++ b/src/main/java/com/imooc/sell/utils/JsonUtil.java[m
+[36m@@ -1,4 +1,4 @@[m
+[31m-package com.imooc.sell.utils.serializer;[m
+[32m+[m[32mpackage com.imooc.sell.utils;[m
+ [m
+ import com.google.gson.Gson;[m
+ import com.google.gson.GsonBuilder;[m
+[1mdiff --git a/src/main/java/com/imooc/sell/utils/MathUtil.java b/src/main/java/com/imooc/sell/utils/MathUtil.java[m
+[1mindex 71bddfe..4253652 100644[m
+[1m--- a/src/main/java/com/imooc/sell/utils/MathUtil.java[m
+[1m+++ b/src/main/java/com/imooc/sell/utils/MathUtil.java[m
+[36m@@ -1,4 +1,15 @@[m
+ package com.imooc.sell.utils;[m
+ [m
+ public class MathUtil {[m
+[32m+[m[32m    private static final Double MONEY_RANGE = 0.01;[m
+[32m+[m
+[32m+[m[32m    //比较两个金额是否相等[m
+[32m+[m[32m    public static Boolean equals(Double d1,Double d2){[m
+[32m+[m[32m        Double result = Math.abs(d1 - d2);[m
+[32m+[m[32m        if (result < MONEY_RANGE){[m
+[32m+[m[32m            return true;[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            return false;[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+ }[m
+[1mdiff --git a/src/main/resources/application.yml b/src/main/resources/application.yml[m
+[1mindex 666c648..4140a68 100644[m
+[1m--- a/src/main/resources/application.yml[m
+[1m+++ b/src/main/resources/application.yml[m
+[36m@@ -11,3 +11,11 @@[m [mspring:[m
+ server:[m
+   context-path: /sell[m
+ [m
+[32m+[m[32mwechat:[m
+[32m+[m[32m  mpAppId: wx03ee9e2f8bc12b2e[m
+[32m+[m[32m  mpAppSecret: 1ea78c825158a3738770650fafbfd5bd[m
+[32m+[m[32m  mchId: 11[m
+[32m+[m[32m  mchKey: c1[m
+[32m+[m[32m  keyPath: /var[m
+[32m+[m[32m  notifyUrl: http://lxstsell.natapp1.cc/sell/pay/notify[m
+[32m+[m
+[1mdiff --git a/src/main/resources/static/pay.html b/src/main/resources/static/pay.html[m
+[1mindex e69de29..05e75fa 100644[m
+[1m--- a/src/main/resources/static/pay.html[m
+[1m+++ b/src/main/resources/static/pay.html[m
+[36m@@ -0,0 +1,27 @@[m
+[32m+[m[32m<script>[m
+[32m+[m[32m    function onBridgeReady(){[m
+[32m+[m[32m        WeixinJSBridge.invoke([m
+[32m+[m[32m            'getBrandWCPayRequest', {[m
+[32m+[m[32m                "appId":"wx2421b1c4370ec43b",     //公众号名称，由商户传入[m
+[32m+[m[32m                "timeStamp":"1395712654",         //时间戳，自1970年以来的秒数[m
+[32m+[m[32m                "nonceStr":"e61463f8efa94090b1f366cccfbbb444", //随机串[m
+[32m+[m[32m                "package":"prepay_id=u802345jgfjsdfgsdg888",[m
+[32m+[m[32m                "signType":"MD5",         //微信签名方式：[m
+[32m+[m[32m                "paySign":"70EA570631E4BB79628FBCA90534C63FF7FADD89" //微信签名[m
+[32m+[m[32m            },[m
+[32m+[m[32m            function(res){[m
+[32m+[m[32m                if(res.err_msg == "get_brand_wcpay_request:ok" ) {}     // 使用以上方式判断前端返回,微信团队郑重提示：res.err_msg将在用户支付成功后返回    ok，但并不保证它绝对可靠。[m
+[32m+[m[32m            }[m
+[32m+[m[32m        );[m
+[32m+[m[32m    }[m
+[32m+[m[32m    if (typeof WeixinJSBridge == "undefined"){[m
+[32m+[m[32m        if( document.addEventListener ){[m
+[32m+[m[32m            document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);[m
+[32m+[m[32m        }else if (document.attachEvent){[m
+[32m+[m[32m            document.attachEvent('WeixinJSBridgeReady', onBridgeReady);[m
+[32m+[m[32m            document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }else{[m
+[32m+[m[32m        onBridgeReady();[m
+[32m+[m[32m    }[m
+[32m+[m[32m</script>[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/resources/templates/common/error.ftl b/src/main/resources/templates/common/error.ftl[m
+[1mindex e69de29..1a33142 100644[m
+[1m--- a/src/main/resources/templates/common/error.ftl[m
+[1m+++ b/src/main/resources/templates/common/error.ftl[m
+[36m@@ -0,0 +1,26 @@[m
+[32m+[m[32m<html>[m
+[32m+[m[32m<head>[m
+[32m+[m[32m    <meta charset="utf-8">[m
+[32m+[m[32m    <title>错误提示</title>[m
+[32m+[m[32m    <link href="https://cdn.bootcss.com/bootstrap/3.0.1/css/bootstrap.min.css" rel="stylesheet">[m
+[32m+[m[32m</head>[m
+[32m+[m[32m<body>[m
+[32m+[m
+[32m+[m[32m<div class="container">[m
+[32m+[m[32m    <div class="row clearfix">[m
+[32m+[m[32m        <div class="col-md-12 column">[m
+[32m+[m[32m            <div class="alert alert-dismissable alert-danger">[m
+[32m+[m[32m                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>[m
+[32m+[m[32m                <h4>[m
+[32m+[m[32m                    错误![m
+[32m+[m[32m                </h4> <strong>${msg}</strong> <a href="${url}" class="alert-link">3s后自动跳转</a>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m</div>[m
+[32m+[m
+[32m+[m[32m</body>[m
+[32m+[m[32m<script>[m
+[32m+[m[32m    setTimeout('location.href="${url}"',3000);[m
+[32m+[m[32m</script>[m
+[32m+[m[32m</html>[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/resources/templates/common/header.ftl b/src/main/resources/templates/common/header.ftl[m
+[1mindex e69de29..e9861f2 100644[m
+[1m--- a/src/main/resources/templates/common/header.ftl[m
+[1m+++ b/src/main/resources/templates/common/header.ftl[m
+[36m@@ -0,0 +1,6 @@[m
+[32m+[m[32m<head>[m
+[32m+[m[32m    <meta charset="utf-8">[m
+[32m+[m[32m    <title>卖家后端管理系统</title>[m
+[32m+[m[32m    <link href="https://cdn.bootcss.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">[m
+[32m+[m[32m    <link rel="stylesheet" href="/sell/css/style.css">[m
+[32m+[m[32m</head>[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/resources/templates/common/success.ftl b/src/main/resources/templates/common/success.ftl[m
+[1mindex e69de29..7f85f9b 100644[m
+[1m--- a/src/main/resources/templates/common/success.ftl[m
+[1m+++ b/src/main/resources/templates/common/success.ftl[m
+[36m@@ -0,0 +1,26 @@[m
+[32m+[m[32m<html>[m
+[32m+[m[32m<head>[m
+[32m+[m[32m    <meta charset="utf-8">[m
+[32m+[m[32m    <title>成功提示</title>[m
+[32m+[m[32m    <link href="https://cdn.bootcss.com/bootstrap/3.0.1/css/bootstrap.min.css" rel="stylesheet">[m
+[32m+[m[32m</head>[m
+[32m+[m[32m<body>[m
+[32m+[m
+[32m+[m[32m<div class="container">[m
+[32m+[m[32m    <div class="row clearfix">[m
+[32m+[m[32m        <div class="col-md-12 column">[m
+[32m+[m[32m            <div class="alert alert-dismissable alert-success">[m
+[32m+[m[32m                <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>[m
+[32m+[m[32m                <h4>[m
+[32m+[m[32m                    成功![m
+[32m+[m[32m                </h4> <strong>${msg}</strong> <a href="${url}" class="alert-link">3s后自动跳转</a>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m</div>[m
+[32m+[m
+[32m+[m[32m</body>[m
+[32m+[m[32m<script>[m
+[32m+[m[32m    setTimeout('location.href="${url}"',3000);[m
+[32m+[m[32m</script>[m
+[32m+[m[32m</html>[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/resources/templates/order/detail.ftl b/src/main/resources/templates/order/detail.ftl[m
+[1mindex e69de29..bba7f4f 100644[m
+[1m--- a/src/main/resources/templates/order/detail.ftl[m
+[1m+++ b/src/main/resources/templates/order/detail.ftl[m
+[36m@@ -0,0 +1,62 @@[m
+[32m+[m[32m<html>[m
+[32m+[m[32m<#include "../common/header.ftl">[m
+[32m+[m[32m<body>[m
+[32m+[m
+[32m+[m[32m<div id="wrapper" class="toggled">[m
+[32m+[m[32m    <#include "../common/nav.ftl">[m
+[32m+[m[32m    <div id="page-content-wrapper">[m
+[32m+[m[32m        <div class="container">[m
+[32m+[m[32m            <div class="row clearfix">[m
+[32m+[m[32m                <div class="col-md-4 column">[m
+[32m+[m[32m                    <table class="table table-bordered">[m
+[32m+[m[32m                        <thead>[m
+[32m+[m[32m                        <tr>[m
+[32m+[m[32m                            <th>订单id</th>[m
+[32m+[m[32m                            <th>订单总金额</th>[m
+[32m+[m[32m                        </tr>[m
+[32m+[m[32m                        </thead>[m
+[32m+[m[32m                        <tbody>[m
+[32m+[m[32m                        <tr>[m
+[32m+[m[32m                            <td>${orderDTO.orderId}</td>[m
+[32m+[m[32m                            <td>${orderDTO.orderAmount[m
+[32m+[m[32m                            }</td>[m
+[32m+[m[32m                        </tr>[m
+[32m+[m[32m                        </tbody>[m
+[32m+[m[32m                    </table>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m                <div class="col-md-12 column">[m
+[32m+[m[32m                    <table class="table table-bordered">[m
+[32m+[m[32m                        <thead>[m
+[32m+[m[32m                        <tr>[m
+[32m+[m[32m                            <th>商品id</th>[m
+[32m+[m[32m                            <th>商品名称</th>[m
+[32m+[m[32m                            <th>价格</th>[m
+[32m+[m[32m                            <th>数量</th>[m
+[32m+[m[32m                            <th>总额</th>[m
+[32m+[m[32m                        </tr>[m
+[32m+[m[32m                        </thead>[m
+[32m+[m[32m                        <tbody>[m
+[32m+[m[32m                <#list orderDTO.orderDetailList as orderDetail>[m
+[32m+[m[32m                <tr>[m
+[32m+[m[32m                    <td>${orderDetail.productId}</td>[m
+[32m+[m[32m                    <td>${orderDetail.productName}</td>[m
+[32m+[m[32m                    <td>${orderDetail.productPrice}</td>[m
+[32m+[m[32m                    <td>${orderDetail.productQuantity}</td>[m
+[32m+[m[32m                    <td>${orderDetail.productPrice * orderDetail.productQuantity}</td>[m
+[32m+[m[32m                </tr>[m
+[32m+[m[32m                </#list>[m
+[32m+[m[32m                        </tbody>[m
+[32m+[m[32m                    </table>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m                <div class="col-md-12 column">[m
+[32m+[m[32m            <#if orderDTO.getOrderStatusEnum().message == "新订单">[m
+[32m+[m[32m                <a href="/sell/seller/order/finish?orderId=${orderDTO.orderId}" type="button" class="btn btn-default btn-primary">完结订单</a>[m
+[32m+[m[32m                <a href="/sell/seller/order/cancel?orderId=${orderDTO.orderId}" type="button" class="btn btn-default btn-danger">取消订单</a>[m
+[32m+[m[32m            </#if>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m</div>[m
+[32m+[m[32m</body>[m
+[32m+[m[32m</html>[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/resources/templates/order/list.ftl b/src/main/resources/templates/order/list.ftl[m
+[1mindex e69de29..9fdbd69 100644[m
+[1m--- a/src/main/resources/templates/order/list.ftl[m
+[1m+++ b/src/main/resources/templates/order/list.ftl[m
+[36m@@ -0,0 +1,92 @@[m
+[32m+[m[32m<html>[m
+[32m+[m[32m    <#include "../common/header.ftl">[m
+[32m+[m[32m    <body>[m
+[32m+[m
+[32m+[m[32m    <div id="wrapper" class="toggled">[m
+[32m+[m[32m        <#include "../common/nav.ftl">[m
+[32m+[m[32m        <div id="page-content-wrapper">[m
+[32m+[m[32m            <div class="container-fluid">[m
+[32m+[m[32m                <div class="row clearfix">[m
+[32m+[m[32m                    <div class="col-md-12 column">[m
+[32m+[m[32m                        <table class="table table-bordered table-condensed">[m
+[32m+[m[32m                            <thead>[m
+[32m+[m[32m                            <tr>[m
+[32m+[m[32m                                <th>订单id</th>[m
+[32m+[m[32m                                <th>姓名</th>[m
+[32m+[m[32m                                <th>手机号</th>[m
+[32m+[m[32m                                <th>地址</th>[m
+[32m+[m[32m                                <th>金额</th>[m
+[32m+[m[32m                                <th>订单状态</th>[m
+[32m+[m[32m                                <th>支付状态</th>[m
+[32m+[m[32m                                <th>创建时间</th>[m
+[32m+[m[32m                                <th colspan="2">操作</th>[m
+[32m+[m[32m                            </tr>[m
+[32m+[m[32m                            </thead>[m
+[32m+[m[32m                            <tbody>[m
+[32m+[m[32m                    <#list orderDTOPage.content as orderDTO>[m
+[32m+[m[32m                    <tr>[m
+[32m+[m[32m                        <td>${orderDTO.orderId}</td>[m
+[32m+[m[32m                        <td>${orderDTO.buyerName}</td>[m
+[32m+[m[32m                        <td>${orderDTO.buyerPhone}</td>[m
+[32m+[m[32m                        <td>${orderDTO.buyerAddress}</td>[m
+[32m+[m[32m                        <td>${orderDTO.orderAmount}</td>[m
+[32m+[m[32m                        <td>${orderDTO.getOrderStatusEnum().getMessage()}</td>[m
+[32m+[m[32m                        <td>${orderDTO.getPayStatusEnum().getMessage()}</td>[m
+[32m+[m[32m                        <td>${orderDTO.createTime}</td>[m
+[32m+[m[32m                        <td><a href="/sell/seller/order/detail?orderId=${orderDTO.orderId}">详情</a></td>[m
+[32m+[m[32m                        <td>[m
+[32m+[m[32m                            <#if orderDTO.getOrderStatusEnum().message == "新订单">[m
+[32m+[m[32m                                <a href="/sell/seller/order/cancel?orderId=${orderDTO.orderId}">取消</a>[m
+[32m+[m[32m                            </#if>[m
+[32m+[m[32m                        </td>[m
+[32m+[m[32m                    </tr>[m
+[32m+[m[32m                    </#list>[m
+[32m+[m[32m                            </tbody>[m
+[32m+[m[32m                        </table>[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                <#--分页-->[m
+[32m+[m[32m                    <div class="col-md-12 column">[m
+[32m+[m[32m                        <ul class="pagination pull-right">[m
+[32m+[m[32m                    <#if currentPage lte 1>[m
+[32m+[m[32m                        <li class="disabled"><a href="#">上一页</a></li>[m
+[32m+[m[32m                    <#else >[m
+[32m+[m[32m                        <li><a href="/sell/seller/order/list?page=${currentPage - 1}&size=${size}">上一页</a></li>[m
+[32m+[m[32m                    </#if>[m
+[32m+[m
+[32m+[m
+[32m+[m[32m                    <#list 1..orderDTOPage.getTotalPages() as index>[m
+[32m+[m[32m                        <#if currentPage gte 11>[m
+[32m+[m[32m                            <li><a href="#">...</a></li>[m
+[32m+[m[32m                            <#break>[m
+[32m+[m[32m                        </#if>[m
+[32m+[m[32m                        <#if currentPage == index>[m
+[32m+[m[32m                            <li class="disabled"><a href="#">${index}</a> </li>[m
+[32m+[m[32m                        <#else>[m
+[32m+[m[32m                            <li><a href="/sell/seller/order/list?page=${index}&size=${size}">${index}</a> </li>[m
+[32m+[m[32m                        </#if>[m
+[32m+[m
+[32m+[m[32m                    </#list>[m
+[32m+[m
+[32m+[m[32m                    <#if currentPage gte orderDTOPage.getTotalPages()>[m
+[32m+[m[32m                        <li class="disabled"><a href="#">下一页</a></li>[m
+[32m+[m[32m                    <#else >[m
+[32m+[m[32m                        <li><a href="/sell/seller/order/list?page=${currentPage + 1}&size=${size}">下一页</a></li>[m
+[32m+[m[32m                    </#if>[m
+[32m+[m[32m                        </ul>[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m    </div>[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    </body>[m
+[32m+[m
+[32m+[m[32m</html>[m
+[32m+[m
+[32m+[m
+[32m+[m[32m<#--<#list orderDTOPage.content as orderDTO>-->[m
+[32m+[m[32m    <#--${orderDTO.orderId}<br>-->[m
+[32m+[m[32m    <#--${orderDTO.buyerOpenid}<br>-->[m
+[32m+[m[32m<#--</#list>-->[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/resources/templates/pay/create.ftl b/src/main/resources/templates/pay/create.ftl[m
+[1mindex e69de29..5d1c6b9 100644[m
+[1m--- a/src/main/resources/templates/pay/create.ftl[m
+[1m+++ b/src/main/resources/templates/pay/create.ftl[m
+[36m@@ -0,0 +1,28 @@[m
+[32m+[m[32m<script>[m
+[32m+[m[32m    function onBridgeReady(){[m
+[32m+[m[32m        WeixinJSBridge.invoke([m
+[32m+[m[32m                'getBrandWCPayRequest', {[m
+[32m+[m[32m                    "appId":"${payResponse.appId}",     //公众号名称，由商户传入[m
+[32m+[m[32m                    "timeStamp":"${payResponse.timeStamp}",         //时间戳，自1970年以来的秒数[m
+[32m+[m[32m                    "nonceStr":"${payResponse.nonceStr}", //随机串[m
+[32m+[m[32m                    "package":"${payResponse.package}",[m
+[32m+[m[32m                    "signType":"MD5",         //微信签名方式：[m
+[32m+[m[32m                    "paySign":"${payResponse.paySign}" //微信签名[m
+[32m+[m[32m                },[m
+[32m+[m[32m                function(res){[m
+[32m+[m[32m                    //if(res.err_msg == "get_brand_wcpay_request:ok" ) {}     // 使用以上方式判断前端返回,微信团队郑重提示：res.err_msg将在用户支付成功后返回    ok，但并不保证它绝对可靠。[m
+[32m+[m[32m                    location.href = "${returnUrl}";[m
+[32m+[m[32m                }[m
+[32m+[m[32m        );[m
+[32m+[m[32m    }[m
+[32m+[m[32m    if (typeof WeixinJSBridge == "undefined"){[m
+[32m+[m[32m        if( document.addEventListener ){[m
+[32m+[m[32m            document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);[m
+[32m+[m[32m        }else if (document.attachEvent){[m
+[32m+[m[32m            document.attachEvent('WeixinJSBridgeReady', onBridgeReady);[m
+[32m+[m[32m            document.attachEvent('onWeixinJSBridgeReady', onBridgeReady);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }else{[m
+[32m+[m[32m        onBridgeReady();[m
+[32m+[m[32m    }[m
+[32m+[m[32m</script>[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/resources/templates/pay/succe.ftl b/src/main/resources/templates/pay/succe.ftl[m
+[1mindex e69de29..36f5f1d 100644[m
+[1m--- a/src/main/resources/templates/pay/succe.ftl[m
+[1m+++ b/src/main/resources/templates/pay/succe.ftl[m
+[36m@@ -0,0 +1,4 @@[m
+[32m+[m[32m<xml>[m
+[32m+[m[32m    <return_code>![CDATA[SUCCESS]]</return_code>[m
+[32m+[m[32m    <return_msg>![CDATA[OK]]</return_msg>[m
+[32m+[m[32m</xml>[m
+\ No newline at end of file[m
+[1mdiff --git a/src/test/java/com/imooc/sell/service/impl/OrderServiceImplTest.java b/src/test/java/com/imooc/sell/service/impl/OrderServiceImplTest.java[m
+[1mindex f2883d7..c8d8cc3 100644[m
+[1m--- a/src/test/java/com/imooc/sell/service/impl/OrderServiceImplTest.java[m
+[1m+++ b/src/test/java/com/imooc/sell/service/impl/OrderServiceImplTest.java[m
+[36m@@ -94,4 +94,12 @@[m [mpublic class OrderServiceImplTest {[m
+         OrderDTO result = orderService.Paid(orderDTO);[m
+         Assert.assertEquals(PayStatusEnum.SUCCESS.getCode(),result.getPayStatus());[m
+     }[m
+[32m+[m
+[32m+[m[32m    @Test[m
+[32m+[m[32m    public void list() {[m
+[32m+[m[32m        PageRequest request = new PageRequest(0,2);[m
+[32m+[m[32m        Page<OrderDTO> orderDTOPage = orderService.findList(request);[m
+[32m+[m[32m        Assert.assertNotEquals(0,orderDTOPage.getTotalElements());[m
+[32m+[m[32m        //Assert.assertTrue("查询多有的订单列表",orderDTOPage.getTotalElements() > 0);[m
+[32m+[m[32m    }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/test/java/com/imooc/sell/service/impl/PayServiceImplTest.java b/src/test/java/com/imooc/sell/service/impl/PayServiceImplTest.java[m
+[1mindex 3c788b6..3aceff0 100644[m
+[1m--- a/src/test/java/com/imooc/sell/service/impl/PayServiceImplTest.java[m
+[1m+++ b/src/test/java/com/imooc/sell/service/impl/PayServiceImplTest.java[m
+[36m@@ -1,5 +1,38 @@[m
+[32m+[m[32mpackage com.imooc.sell.service.impl;[m
+[32m+[m
+[32m+[m[32mimport com.imooc.sell.dto.OrderDTO;[m
+[32m+[m[32mimport com.imooc.sell.service.OrderService;[m
+[32m+[m[32mimport com.imooc.sell.service.PayService;[m
+[32m+[m[32mimport lombok.extern.slf4j.Slf4j;[m
+[32m+[m[32mimport org.junit.Test;[m
+[32m+[m[32mimport org.junit.runner.RunWith;[m
+[32m+[m[32mimport org.springframework.beans.factory.annotation.Autowired;[m
+[32m+[m[32mimport org.springframework.boot.test.context.SpringBootTest;[m
+[32m+[m[32mimport org.springframework.test.context.junit4.SpringRunner;[m
+[32m+[m
+ import static org.junit.Assert.*;[m
+ [m
+[32m+[m[32m@RunWith(SpringRunner.class)[m
+[32m+[m[32m@SpringBootTest[m
+[32m+[m[32m@Slf4j[m
+ public class PayServiceImplTest {[m
+ [m
+[32m+[m[32m    @Autowired[m
+[32m+[m[32m    private PayService payService;[m
+[32m+[m
+[32m+[m[32m    @Autowired[m
+[32m+[m[32m    private OrderService orderService;[m
+[32m+[m
+[32m+[m[32m    @Test[m
+[32m+[m[32m    public void create() {[m
+[32m+[m[32m        OrderDTO orderDTO = orderService.findOne("111");[m
+[32m+[m[32m        payService.create(orderDTO);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    @Test[m
+[32m+[m[32m    public void refund(){[m
+[32m+[m[32m        OrderDTO orderDTO = orderService.findOne("111");[m
+[32m+[m[32m        payService.refund(orderDTO);[m
+[32m+[m[32m    }[m
+[32m+[m
+ }[m
+\ No newline at end of file[m
+warning: LF will be replaced by CRLF in pom.xml.
+The file will have its original line endings in your working directory.
