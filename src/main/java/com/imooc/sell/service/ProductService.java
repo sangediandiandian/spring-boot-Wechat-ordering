@@ -3,8 +3,8 @@ package com.imooc.sell.service;
 import com.imooc.sell.dataobject.ProductInfo;
 import com.imooc.sell.dto.CartDTO;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.awt.print.Pageable;
 import java.util.List;
 
 public interface ProductService {
@@ -22,4 +22,9 @@ public interface ProductService {
 
 //    减库存
     void decreaseStock(List<CartDTO> cartDTOList);
+
+//    上架
+    ProductInfo onSale(String productId);
+//    下架
+    ProductInfo offSale(String productId);
 }
