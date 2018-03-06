@@ -23,6 +23,8 @@ wechat:
   mchKey: c1
   keyPath: /var
   notifyUrl: http://lxstsell.natapp1.cc/sell/pay/notify
+  templateId:
+    orderStatus: 123
 
 projectUrl:
   wechatMpAuthorize: http://lxstsell.natapp1.cc
