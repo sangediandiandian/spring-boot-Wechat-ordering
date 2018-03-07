@@ -9,6 +9,7 @@ import com.imooc.sell.dto.OrderDTO;
 import com.imooc.sell.enums.OrderStatusEnum;
 import com.imooc.sell.enums.PayStatusEnum;
 import com.imooc.sell.enums.ResultEnum;
+import com.imooc.sell.exception.ResponseBankException;
 import com.imooc.sell.exception.SellExctption;
 import com.imooc.sell.repository.OrderDetailRepository;
 import com.imooc.sell.repository.OrderMasterRepository;
@@ -64,6 +65,7 @@ public class OrderServiceImpl implements OrderService {
             ProductInfo productInfo = productService.findOne(orderDetail.getProductId());
             if (productInfo == null){
                 throw new SellExctption(ResultEnum.PRODUCT_NOT_EXIST);
+//                throw new ResponseBankException();
             }
             //2.计算订单总价
             orderAmount = productInfo.getProductPrice()
